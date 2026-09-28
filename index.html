@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sprout Tracker</title>
+    <style>
+        :root {
+            --bg: #FFF0F5;
+            --card: #FFFFFF;
+            --text: #333333;
+            --primary: #FFB6C1;
+            --primary-dark: #FF69B4;
+            --success: #90EE90;
+            --danger: #FFB6C1;
+            --gray: #E0E0E0;
+            --rest: #B0C4DE;
+        }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg); margin: 0; padding: 20px; color: var(--text); padding-bottom: 80px; }
+        .container { max-width: 500px; margin: 0 auto; }
+        
+        /* Sprout Stage */
+        .stage { background: var(--card); border-radius: 24px; padding: 30px 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; position: relative; }
+        #sprout-container { transition: transform 0.3s ease; }
+        .bounce { animation: bounce 2s infinite ease-in-out; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .sad { animation: none; filter: grayscale(40%); }
+        
+        /* Stats */
+        .stats-row { display: flex; justify-content: space-around; margin-top: 15px; font-weight: bold; }
+        .stat-pill { background: var(--bg); padding: 8px 16px; border-radius: 20px; font-size: 14px; }
+        
+        /* Calendar */
+        .calendar-strip { display: flex; justify-content: space-between; overflow-x: auto; padding: 10px 0; margin-bottom: 20px; gap: 8px; }
+        .cal-day { background: var(--card); padding: 10px 5px; border-radius: 12px; min-width: 45px; text-align: center; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
+        .cal-day.active { border-color: var(--primary-dark); background: var(--bg); }
+        .cal-day.missed { opacity: 0.6; }
+        .cal-day .day-name { font-size: 12px; color: #888; }
+        .cal-day .day-num { font-weight: bold; margin: 4px 0; }
+        .cal-day .indicator { width: 8px; height: 8px; border-radius: 50%; margin: 0 auto; background: var(--gray); }
+        .indicator.success { background: var(--success); }
+        .indicator.fail { background: #FF6B6B; }
+        .indicator.rest { background: var(--rest); }
+
+        /* Actions */
+        .card { background: var(--card); border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .card-header h3 { margin: 0; font-size: 18px; }
+        
+        .editing-badge { background: #FFE4B5; color: #B8860B; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; cursor: pointer; display: none; }
+        
+        /* Checkboxes & Buttons */
+        .toggle-btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; background: var(--gray); color: #555; margin-bottom: 10px;}
+        .toggle-btn.checked { background: var(--success); color: #006400; }
+        .toggle-btn.rest-checked { background: var(--rest); color: #104E8B; }
+        
+        .meal-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .meal-name { font-weight: 500; width: 80px; }
+        .meal-opts { display: flex; gap: 8px; }
+        .meal-opt { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--gray); background: white; cursor: pointer; transition: 0.2s; }
+        .meal-opt.h-active { background: var(--success); border-color: var(--success); color: darkgreen; font-weight: bold; }
+        .meal-opt.u-active { background: #FF6B6B; border-color: #FF6B6B; color: white; font-weight: bold; }
+        
+        .reset-btn { width: 100%; padding: 15px; background: transparent; border: 2px dashed #FF6B6B; color: #FF6B6B; border-radius: 12px; cursor: pointer; font-weight: bold; margin-top: 30px; }
+        
+        /* Modal */
+        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 24px; border-radius: 20px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 100; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="stage">
+        <h2 id="sprout-message" style="margin-top:0; margin-bottom: 20px; font-size: 20px;">Let's grow today!</h2>
+        
+        <!-- Dynamic SVG Sprout -->
+        <div id="sprout-container" class="bounce">
+            <svg id="sprout-svg" width="160" height="160" viewBox="0 0 100 100">
+                <!-- Base changes size dynamically -->
+                <circle id="sprout-body" cx="50" cy="65" r="30" fill="#FFB6C1" />
+                <!-- Leaf -->
+                <path id="sprout-leaf" d="M50 35 Q65 10 80 25 Q60 40 50 35" fill="#32CD32" />
+                <!-- Face -->
+                <circle class="eye" cx="40" cy="60" r="3" fill="#333" />
+                <circle class="eye" cx="60" cy="60" r="3" fill="#333" />
+                <path id="sprout-mouth" d="M 45 70 Q 50 75 55 70" stroke="#333" stroke-width="2" fill="transparent" stroke-linecap="round"/>
+                <!-- Blush -->
+                <circle cx="32" cy="65" r="4" fill="#FF69B4" opacity="0.5" />
+                <circle cx="68" cy="65" r="4" fill="#FF69B4" opacity="0.5" />
+                
+                <!-- Accessories (Hidden by default) -->
+                <g id="acc-bandana" style="display:none;">
+                    <path d="M 20 50 Q 50 70 80 50 L 85 45 Q 50 60 15 45 Z" fill="#FF4500" />
+                    <path d="M 20 50 L 10 70 L 25 55 Z" fill="#FF4500" />
+                </g>
+                <g id="acc-glasses" style="display:none;">
+                    <rect x="33" y="55" width="14" height="8" rx="2" fill="#222" />
+                    <rect x="53" y="55" width="14" height="8" rx="2" fill="#222" />
+                    <line x1="47" y1="59" x2="53" y2="59" stroke="#222" stroke-width="2" />
+                </g>
+                <g id="acc-crown" style="display:none;">
+                    <path d="M 35 35 L 40 20 L 50 30 L 60 20 L 65 35 Z" fill="#FFD700" stroke="#DAA520" stroke-width="1"/>
+                </g>
+                <text id="sleep-zzz" x="70" y="30" fill="#104E8B" font-size="14" font-weight="bold" style="display:none; animation: bounce 2s infinite;">Zzz</text>
+            </svg>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-pill">🔥 Streak: <span id="streak-count">0</span></div>
+            <div class="stat-pill">⭐ Best: <span id="best-count">0</span></div>
+        </div>
+    </div>
+
+    <!-- Calendar -->
+    <div class="calendar-strip" id="calendar-container">
+        <!-- JS injects days here -->
+    </div>
+
+    <!-- Actions Area -->
+    <div class="card">
+        <div class="card-header">
+            <h3 id="action-date-title">Today's Log</h3>
+            <div id="back-to-today" class="editing-badge" onclick="setEditingDate(getTodayString())">Back to Today ↩</div>
+        </div>
+
+        <!-- Toggles -->
+        <button id="btn-workout" class="toggle-btn" onclick="toggleWorkout()">
+            <span>🏋️ Hit the Gym</span>
+            <span id="check-workout">⚪</span>
+        </button>
+        
+        <button id="btn-rest" class="toggle-btn" onclick="toggleRest()">
+            <span>💤 Rest Day (Freeze Streak)</span>
+            <span id="check-rest">⚪</span>
+        </button>
+
+        <hr style="border: 0; border-top: 1px solid #EEE; margin: 20px 0;">
+
+        <!-- Meals -->
+        <div id="meal-section">
+            <h3 style="margin-top: 0; font-size: 16px; margin-bottom: 15px;">Meals</h3>
+            <div class="meal-row">
+                <div class="meal-name">Breakfast</div>
+                <div class="meal-opts">
+                    <div id="m-b-h" class="meal-opt" onclick="setMeal('b', 'h')">🥗 Good</div>
+                    <div id="m-b-u" class="meal-opt" onclick="setMeal('b', 'u')">🍕 Bad</div>
+                </div>
+            </div>
+            <div class="meal-row">
+                <div class="meal-name">Lunch</div>
+                <div class="meal-opts">
+                    <div id="m-l-h" class="meal-opt" onclick="setMeal('l', 'h')">🥗 Good</div>
+                    <div id="m-l-u" class="meal-opt" onclick="setMeal('l', 'u')">🍕 Bad</div>
+                </div>
+            </div>
+            <div class="meal-row">
+                <div class="meal-name">Dinner</div>
+                <div class="meal-opts">
+                    <div id="m-d-h" class="meal-opt" onclick="setMeal('d', 'h')">🥗 Good</div>
+                    <div id="m-d-u" class="meal-opt" onclick="setMeal('d', 'u')">🍕 Bad</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="reset-btn" onclick="resetApp()">⚠️ Hard Reset Data</button>
+</div>
+
+<div id="toast" class="toast">Saved!</div>
+
+<script>
+    // --- UTILS ---
+    function getTodayString() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+    
+    function getOffsetDateString(offsetDays) {
+        const d = new Date();
+        d.setDate(d.getDate() + offsetDays);
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.innerText = msg;
+        t.style.opacity = 1;
+        setTimeout(() => t.style.opacity = 0, 2000);
+    }
+
+    // --- STATE MANAGEMENT ---
+    let data = JSON.parse(localStorage.getItem('sproutData')) || { logs: {}, bestStreak: 0 };
+    let editingDate = getTodayString();
+
+    function initDay(dateStr) {
+        if (!data.logs[dateStr]) {
+            data.logs[dateStr] = { workout: false, restDay: false, meals: { b: null, l: null, d: null } };
+        }
+    }
+
+    function saveData() {
+        localStorage.setItem('sproutData', JSON.stringify(data));
+        calculateEngine();
+        render();
+    }
+
+    // --- ACTIONS ---
+    function toggleWorkout() {
+        initDay(editingDate);
+        if (data.logs[editingDate].restDay) data.logs[editingDate].restDay = false; // mutually exclusive
+        data.logs[editingDate].workout = !data.logs[editingDate].workout;
+        if(data.logs[editingDate].workout) showToast("+ Workout Logged!");
+        saveData();
+    }
+
+    function toggleRest() {
+        initDay(editingDate);
+        data.logs[editingDate].restDay = !data.logs[editingDate].restDay;
+        if(data.logs[editingDate].restDay) {
+            data.logs[editingDate].workout = false; // Can't workout on rest day
+            data.logs[editingDate].meals = { b: null, l: null, d: null }; // Optional: clear meals or keep them? Let's clear for simplicity.
+            showToast("Rest Day Active 💤");
+        }
+        saveData();
+    }
+
+    function setMeal(mealType, healthType) {
+        initDay(editingDate);
+        if (data.logs[editingDate].restDay) return; // Disabled on rest days
+        
+        // Toggle off if clicking the same one
+        if (data.logs[editingDate].meals[mealType] === healthType) {
+            data.logs[editingDate].meals[mealType] = null;
+        } else {
+            data.logs[editingDate].meals[mealType] = healthType;
+        }
+        saveData();
+    }
+
+    function setEditingDate(dateStr) {
+        editingDate = dateStr;
+        render();
+    }
+
+    function resetApp() {
+        if(confirm("Are you sure? This deletes all history and resets Sprout to baby size.")) {
+            localStorage.removeItem('sproutData');
+            data = { logs: {}, bestStreak: 0 };
+            editingDate = getTodayString();
+            saveData();
+        }
+    }
+
+    // --- ENGINE (Calculates Streaks & Penalties) ---
+    let currentStreak = 0;
+    let isSick = false;
+
+    function calculateEngine() {
+        currentStreak = 0;
+        isSick = false;
+        
+        // Calculate looking back from today up to 30 days to build the streak
+        let breakFound = false;
+        
+        for (let i = 0; i < 30; i++) {
+            let dStr = getOffsetDateString(-i);
+            let log = data.logs[dStr];
+            
+            // If it's today and empty, don't penalize yet (grace period for current day)
+            if (i === 0 && (!log || (!log.workout && !log.restDay && !log.meals.b && !log.meals.l && !log.meals.d))) {
+                continue; 
+            }
+
+            if (!log) {
+                // Missing day breaks streak
+                breakFound = true;
+                if (i === 1) isSick = true; // Missed yesterday makes him sick today
+                continue;
+            }
+
+            if (log.restDay) {
+                // Rest day carries streak forward without adding to it
+                continue;
+            }
+
+            // Calculate daily score
+            let score = 0;
+            if (log.workout) score += 2;
+            ['b', 'l', 'd'].forEach(m => {
+                if (log.meals[m] === 'h') score += 1;
+                if (log.meals[m] === 'u') score -= 1;
+            });
+
+            if (score > 0) {
+                if (!breakFound) currentStreak++;
+            } else if (score < 0) {
+                breakFound = true;
+                if (i <= 1) isSick = true; // Bad day yesterday or today
+            } else {
+                // Neutral day (score 0). If they did nothing, it's a break.
+                breakFound = true;
+            }
+        }
+
+        if (currentStreak > data.bestStreak) data.bestStreak = currentStreak;
+    }
+
+    // --- RENDER UI ---
+    function render() {
+        initDay(editingDate);
+        const log = data.logs[editingDate];
+        const isToday = editingDate === getTodayString();
+
+        // 1. Update Header
+        document.getElementById('action-date-title').innerText = isToday ? "Today's Log" : "Editing: " + editingDate;
+        document.getElementById('back-to-today').style.display = isToday ? 'none' : 'block';
+        
+        // 2. Update Toggles
+        const wBtn = document.getElementById('btn-workout');
+        const rBtn = document.getElementById('btn-rest');
+        const mealSec = document.getElementById('meal-section');
+
+        if (log.workout) {
+            wBtn.className = 'toggle-btn checked';
+            document.getElementById('check-workout').innerText = '✅';
+        } else {
+            wBtn.className = 'toggle-btn';
+            document.getElementById('check-workout').innerText = '⚪';
+        }
+
+        if (log.restDay) {
+            rBtn.className = 'toggle-btn rest-checked';
+            document.getElementById('check-rest').innerText = '✅';
+            wBtn.style.opacity = '0.5';
+            mealSec.style.opacity = '0.3';
+            mealSec.style.pointerEvents = 'none';
+        } else {
+            rBtn.className = 'toggle-btn';
+            document.getElementById('check-rest').innerText = '⚪';
+            wBtn.style.opacity = '1';
+            mealSec.style.opacity = '1';
+            mealSec.style.pointerEvents = 'auto';
+        }
+
+        // 3. Update Meals
+        ['b', 'l', 'd'].forEach(m => {
+            document.getElementById(`m-${m}-h`).className = `meal-opt ${log.meals[m] === 'h' ? 'h-active' : ''}`;
+            document.getElementById(`m-${m}-u`).className = `meal-opt ${log.meals[m] === 'u' ? 'u-active' : ''}`;
+        });
+
+        // 4. Update Stats & Calendar
+        document.getElementById('streak-count').innerText = currentStreak;
+        document.getElementById('best-count').innerText = data.bestStreak;
+        renderCalendar();
+        
+        // 5. Update Sprout Avatar
+        updateSproutVisuals();
+    }
+
+    function renderCalendar() {
+        const cal = document.getElementById('calendar-container');
+        cal.innerHTML = '';
+        
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+        for (let i = 6; i >= 0; i--) {
+            let d = new Date();
+            d.setDate(d.getDate() - i);
+            let dStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            let dayLog = data.logs[dStr];
+
+            let statusClass = 'missed'; // default gray
+            if (dayLog) {
+                if (dayLog.restDay) statusClass = 'rest';
+                else {
+                    let score = (dayLog.workout ? 2 : 0) + 
+                                (dayLog.meals.b==='h'?1 : dayLog.meals.b==='u'?-1:0) + 
+                                (dayLog.meals.l==='h'?1 : dayLog.meals.l==='u'?-1:0) + 
+                                (dayLog.meals.d==='h'?1 : dayLog.meals.d==='u'?-1:0);
+                    if (score > 0) statusClass = 'success';
+                    if (score < 0) statusClass = 'fail';
+                }
+            }
+            if (i === 0 && !dayLog) statusClass = 'missed'; // Today empty is just empty, not necessarily missed yet
+
+            let div = document.createElement('div');
+            div.className = `cal-day ${dStr === editingDate ? 'active' : ''}`;
+            div.onclick = () => setEditingDate(dStr);
+            div.innerHTML = `
+                <div class="day-name">${days[d.getDay()]}</div>
+                <div class="day-num">${d.getDate()}</div>
+                <div class="indicator ${statusClass}"></div>
+            `;
+            cal.appendChild(div);
+        }
+    }
+
+    function updateSproutVisuals() {
+        const msg = document.getElementById('sprout-message');
+        const body = document.getElementById('sprout-body');
+        const mouth = document.getElementById('sprout-mouth');
+        const cont = document.getElementById('sprout-container');
+        const zzz = document.getElementById('sleep-zzz');
+        
+        // Growth mechanic (Base radius 30, grows by 2 per streak day, max 48)
+        let newRadius = 30 + (currentStreak * 2);
+        if (newRadius > 48) newRadius = 48;
+        body.setAttribute('r', newRadius);
+
+        // State Check
+        let todayLog = data.logs[getTodayString()];
+        
+        if (todayLog && todayLog.restDay) {
+            msg.innerText = "Shhh... Recharging! 💤";
+            cont.className = ''; 
+            mouth.setAttribute('d', 'M 45 68 Q 50 68 55 68'); // Flat sleeping mouth
+            zzz.style.display = 'block';
+            document.querySelectorAll('.eye').forEach(e => e.setAttribute('d', 'M40 60 L45 60')); // close eyes hack conceptually
+        } else if (isSick) {
+            msg.innerText = "I feel weak... save me! 🤒";
+            cont.className = 'sad';
+            mouth.setAttribute('d', 'M 45 75 Q 50 70 55 75'); // Sad mouth
+            zzz.style.display = 'none';
+        } else if (currentStreak > 0) {
+            msg.innerText = `Streak of ${currentStreak}! I'm growing! 🔥`;
+            cont.className = 'bounce';
+            mouth.setAttribute('d', 'M 45 70 Q 50 78 55 70'); // Big happy mouth
+            zzz.style.display = 'none';
+        } else {
+            msg.innerText = "Let's build a streak! 🌱";
+            cont.className = 'bounce';
+            mouth.setAttribute('d', 'M 45 70 Q 50 75 55 70'); // Normal smile
+            zzz.style.display = 'none';
+        }
+
+        // Consequences: Accessories only equip if streak is maintained!
+        document.getElementById('acc-bandana').style.display = currentStreak >= 5 ? 'block' : 'none';
+        document.getElementById('acc-glasses').style.display = currentStreak >= 10 ? 'block' : 'none';
+        document.getElementById('acc-crown').style.display = currentStreak >= 15 ? 'block' : 'none';
+    }
+
+    // --- INIT ---
+    calculateEngine();
+    render();
+</script>
+</body>
+</html>
