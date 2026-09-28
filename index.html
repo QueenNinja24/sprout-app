@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sprout Tracker</title>
     
-    <!-- Universal Embedded Mobile App Icon (Bypasses SVG limitations) -->
     <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAQAAAAAYLlVAAAADklEQVR42mNkGMAEYAxmACUwAPx17oH8AAAAAElFTkSuQmCC">
     <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAQAAAAAYLlVAAAADklEQVR42mNkGMAEYAxmACUwAPx17oH8AAAAAElFTkSuQmCC">
 
@@ -82,7 +81,7 @@
         .meal-opts { display: flex; gap: 6px; flex: 1; justify-content: flex-end; }
         .meal-opt { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--gray); background: white; cursor: pointer; font-size: 12px; transition: 0.2s; text-align: center; }
         .meal-opt.h-active { background: var(--success); border-color: var(--success); color: darkgreen; font-weight: bold; }
-        .meal-opt.u-active { background: #FFB6C1; border-color: #FFB6C1; color: #8B0000; font-weight: bold; }
+        .meal-opt.u-active { background: var(--primary); border-color: var(--primary); color: #8B0000; font-weight: bold; }
         .meal-opt.s-active { background: var(--skipped); border-color: #9370DB; color: #4B0082; font-weight: bold; }
         
         .input-grid { display: flex; gap: 10px; margin-bottom: 15px; }
@@ -93,7 +92,7 @@
         .daily-weight-input { width: 100%; padding: 12px; border-radius: 12px; border: 2px solid var(--gray); font-size: 15px; text-align: center; outline: none; transition: 0.2s; margin-bottom: 15px; }
         .daily-weight-input:focus { border-color: var(--primary-dark); }
 
-        .reset-btn { width: 100%; padding: 15px; background: transparent; border: 2px dashed #FFB6C1; color: #D87093; border-radius: 12px; cursor: pointer; font-weight: bold; margin-top: 30px; }
+        .reset-btn { width: 100%; padding: 15px; background: transparent; border: 2px dashed var(--primary); color: #D87093; border-radius: 12px; cursor: pointer; font-weight: bold; margin-top: 30px; }
         .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 24px; border-radius: 20px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 100; font-weight: bold; }
     </style>
 </head>
@@ -334,8 +333,8 @@
         } else {
             if (data.logs[dateStr].weight === undefined) data.logs[dateStr].weight = "";
             if (data.logs[dateStr].mood === undefined) data.logs[dateStr].mood = null;
-            if (data.logs[dateStr].workout === undefined) data.logs[dateStr].workout = 'no';
-            if (data.logs[dateStr].restDay === undefined) data.logs[dateStr].restDay = false;
+            if (data.logs[dateStr].workout !== 'yes' && data.logs[dateStr].workout !== 'no') data.logs[dateStr].workout = 'no';
+            data.logs[dateStr].restDay = !!data.logs[dateStr].restDay;
             if (data.logs[dateStr].sleepTime === undefined) data.logs[dateStr].sleepTime = "";
             if (data.logs[dateStr].wakeTime === undefined) data.logs[dateStr].wakeTime = "";
             if (data.logs[dateStr].steps === undefined) data.logs[dateStr].steps = "";
@@ -351,10 +350,14 @@
     function setWorkout(choice) {
         initDay(editingDate);
         if (choice === 'rest') {
-            data.logs[editingDate].restDay = true;
-            data.logs[editingDate].workout = 'no';
-            data.logs[editingDate].meals = { b: null, l: null, d: null };
-            showToast("Rest Day Active 💤");
+            data.logs[editingDate].restDay = !data.logs[editingDate].restDay;
+            if (data.logs[editingDate].restDay) {
+                data.logs[editingDate].workout = 'no';
+                data.logs[editingDate].meals = { b: null, l: null, d: null };
+                showToast("Rest Day Active 💤");
+            } else {
+                showToast("Rest Day Cancelled");
+            }
         } else {
             data.logs[editingDate].restDay = false;
             data.logs[editingDate].workout = choice; 
@@ -414,7 +417,7 @@
 
     function calculateDayScore(log) {
         if (!log) return 0;
-        if (log.restDay) return 0;
+        if (Boolean(log.restDay) === true) return 0;
         let score = 0;
         if (log.workout === 'yes') score += 2;
         if (log.workout === 'no') score -= 1;
@@ -441,7 +444,7 @@
             }
 
             if (i < 30) {
-                if (i === 0 && (!log || (log.workout !== 'yes' && log.workout !== 'no' && !log.restDay && !log.meals.b && !log.meals.l && !log.meals.d))) {
+                if (i === 0 && (!log || (log.workout !== 'yes' && log.workout !== 'no' && !Boolean(log.restDay) && !log.meals.b && !log.meals.l && !log.meals.d))) {
                     continue; 
                 }
                 if (!log) {
@@ -449,7 +452,7 @@
                     if (i === 1) isSick = true;
                     continue;
                 }
-                if (log.restDay) continue;
+                if (Boolean(log.restDay) === true) continue;
 
                 let score = calculateDayScore(log);
 
@@ -483,7 +486,7 @@
         gNo.className = 'toggle-opt';
         gRest.className = 'toggle-opt';
 
-        if (log.restDay) {
+        if (Boolean(log.restDay) === true) {
             gRest.className = 'toggle-opt rest-active';
             mealSec.style.opacity = '0.3'; mealSec.style.pointerEvents = 'none';
         } else {
@@ -626,7 +629,7 @@
 
             let statusClass = 'missed';
             if (dayLog) {
-                if (dayLog.restDay) statusClass = 'rest';
+                if (Boolean(dayLog.restDay) === true) statusClass = 'rest';
                 else {
                     let score = calculateDayScore(dayLog);
                     if (score > 0) statusClass = 'success';
@@ -665,21 +668,21 @@
         const eyeLC = document.getElementById('eye-left-closed');
         const eyeRC = document.getElementById('eye-right-closed');
 
-        if (log.restDay) {
+        if (Boolean(log.restDay) === true) {
             msg.innerText = "Shhh... Recharging! 💤";
             cont.className = ''; 
             mouth.setAttribute('d', 'M 45 68 Q 50 68 55 68'); 
             zzz.style.display = 'block';
-            eyeLO.setAttribute('opacity', '0');
-            eyeRO.setAttribute('opacity', '0');
-            eyeLC.setAttribute('opacity', '1');
-            eyeRC.setAttribute('opacity', '1');
+            if(eyeLO) eyeLO.setAttribute('opacity', '0');
+            if(eyeRO) eyeRO.setAttribute('opacity', '0');
+            if(eyeLC) eyeLC.setAttribute('opacity', '1');
+            if(eyeRC) eyeRC.setAttribute('opacity', '1');
         } else {
             zzz.style.display = 'none';
-            eyeLO.setAttribute('opacity', '1');
-            eyeRO.setAttribute('opacity', '1');
-            eyeLC.setAttribute('opacity', '0');
-            eyeRC.setAttribute('opacity', '0');
+            if(eyeLO) eyeLO.setAttribute('opacity', '1');
+            if(eyeRO) eyeRO.setAttribute('opacity', '1');
+            if(eyeLC) eyeLC.setAttribute('opacity', '0');
+            if(eyeRC) eyeRC.setAttribute('opacity', '0');
 
             if (isSick) {
                 msg.innerText = "I feel weak... save me! 🤒";
