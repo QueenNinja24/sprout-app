@@ -21,7 +21,7 @@
         .container { max-width: 500px; margin: 0 auto; }
         
         /* Sprout Stage */
-        .stage { background: var(--card); border-radius: 24px; padding: 30px 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; position: relative; }
+        .stage { background: var(--card); border-radius: 24px; padding: 30px 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 15px; position: relative; }
         #sprout-container { transition: transform 0.3s ease; }
         .bounce { animation: bounce 2s infinite ease-in-out; }
         @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
@@ -31,6 +31,12 @@
         .stats-row { display: flex; justify-content: space-around; margin-top: 15px; font-weight: bold; }
         .stat-pill { background: var(--bg); padding: 8px 16px; border-radius: 20px; font-size: 14px; }
         
+        /* Goal Section */
+        .goal-card { background: var(--card); border-radius: 16px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); text-align: center; }
+        .goal-label { font-size: 12px; color: #888; text-transform: uppercase; font-weight: bold; margin-bottom: 5px; }
+        #user-goal { font-size: 16px; font-weight: bold; outline: none; border-bottom: 1px dashed var(--gray); padding-bottom: 5px; color: var(--primary-dark); transition: 0.2s; }
+        #user-goal:focus { border-bottom-color: var(--primary-dark); }
+
         /* Calendar */
         .calendar-strip { display: flex; justify-content: space-between; overflow-x: auto; padding: 10px 0; margin-bottom: 20px; gap: 8px; }
         .cal-day { background: var(--card); padding: 10px 5px; border-radius: 12px; min-width: 45px; text-align: center; cursor: pointer; border: 2px solid transparent; transition: 0.2s; }
@@ -79,17 +85,14 @@
             <svg id="sprout-svg" width="160" height="160" viewBox="0 0 100 100">
                 <!-- Base changes size dynamically -->
                 <circle id="sprout-body" cx="50" cy="65" r="30" fill="#FFB6C1" />
-                <!-- Leaf -->
                 <path id="sprout-leaf" d="M50 35 Q65 10 80 25 Q60 40 50 35" fill="#32CD32" />
-                <!-- Face -->
                 <circle class="eye" cx="40" cy="60" r="3" fill="#333" />
                 <circle class="eye" cx="60" cy="60" r="3" fill="#333" />
                 <path id="sprout-mouth" d="M 45 70 Q 50 75 55 70" stroke="#333" stroke-width="2" fill="transparent" stroke-linecap="round"/>
-                <!-- Blush -->
                 <circle cx="32" cy="65" r="4" fill="#FF69B4" opacity="0.5" />
                 <circle cx="68" cy="65" r="4" fill="#FF69B4" opacity="0.5" />
                 
-                <!-- Accessories (Hidden by default) -->
+                <!-- Accessories -->
                 <g id="acc-bandana" style="display:none;">
                     <path d="M 20 50 Q 50 70 80 50 L 85 45 Q 50 60 15 45 Z" fill="#FF4500" />
                     <path d="M 20 50 L 10 70 L 25 55 Z" fill="#FF4500" />
@@ -112,10 +115,14 @@
         </div>
     </div>
 
-    <!-- Calendar -->
-    <div class="calendar-strip" id="calendar-container">
-        <!-- JS injects days here -->
+    <!-- Goal Section -->
+    <div class="goal-card">
+        <div class="goal-label">Current Goal</div>
+        <div id="user-goal" contenteditable="true" onblur="saveGoal()">Tap to set your goal...</div>
     </div>
+
+    <!-- Calendar -->
+    <div class="calendar-strip" id="calendar-container"></div>
 
     <!-- Actions Area -->
     <div class="card">
@@ -124,20 +131,18 @@
             <div id="back-to-today" class="editing-badge" onclick="setEditingDate(getTodayString())">Back to Today ↩</div>
         </div>
 
-        <!-- Toggles -->
         <button id="btn-workout" class="toggle-btn" onclick="toggleWorkout()">
             <span>🏋️ Hit the Gym</span>
             <span id="check-workout">⚪</span>
         </button>
         
         <button id="btn-rest" class="toggle-btn" onclick="toggleRest()">
-            <span>💤 Rest Day (Freeze Streak)</span>
+            <span>💤 Rest Day</span>
             <span id="check-rest">⚪</span>
         </button>
 
         <hr style="border: 0; border-top: 1px solid #EEE; margin: 20px 0;">
 
-        <!-- Meals -->
         <div id="meal-section">
             <h3 style="margin-top: 0; font-size: 16px; margin-bottom: 15px;">Meals</h3>
             <div class="meal-row">
@@ -190,8 +195,17 @@
     }
 
     // --- STATE MANAGEMENT ---
-    let data = JSON.parse(localStorage.getItem('sproutData')) || { logs: {}, bestStreak: 0 };
+    let data = JSON.parse(localStorage.getItem('sproutData')) || { logs: {}, bestStreak: 0, goal: "Tap to set your goal..." };
     let editingDate = getTodayString();
+
+    // Load goal on start
+    document.getElementById('user-goal').innerText = data.goal || "Tap to set your goal...";
+
+    function saveGoal() {
+        data.goal = document.getElementById('user-goal').innerText;
+        saveData();
+        showToast("Goal Saved! 🎯");
+    }
 
     function initDay(dateStr) {
         if (!data.logs[dateStr]) {
@@ -208,7 +222,7 @@
     // --- ACTIONS ---
     function toggleWorkout() {
         initDay(editingDate);
-        if (data.logs[editingDate].restDay) data.logs[editingDate].restDay = false; // mutually exclusive
+        if (data.logs[editingDate].restDay) data.logs[editingDate].restDay = false;
         data.logs[editingDate].workout = !data.logs[editingDate].workout;
         if(data.logs[editingDate].workout) showToast("+ Workout Logged!");
         saveData();
@@ -218,8 +232,8 @@
         initDay(editingDate);
         data.logs[editingDate].restDay = !data.logs[editingDate].restDay;
         if(data.logs[editingDate].restDay) {
-            data.logs[editingDate].workout = false; // Can't workout on rest day
-            data.logs[editingDate].meals = { b: null, l: null, d: null }; // Optional: clear meals or keep them? Let's clear for simplicity.
+            data.logs[editingDate].workout = false; 
+            data.logs[editingDate].meals = { b: null, l: null, d: null }; 
             showToast("Rest Day Active 💤");
         }
         saveData();
@@ -227,9 +241,8 @@
 
     function setMeal(mealType, healthType) {
         initDay(editingDate);
-        if (data.logs[editingDate].restDay) return; // Disabled on rest days
+        if (data.logs[editingDate].restDay) return; 
         
-        // Toggle off if clicking the same one
         if (data.logs[editingDate].meals[mealType] === healthType) {
             data.logs[editingDate].meals[mealType] = null;
         } else {
@@ -246,45 +259,38 @@
     function resetApp() {
         if(confirm("Are you sure? This deletes all history and resets Sprout to baby size.")) {
             localStorage.removeItem('sproutData');
-            data = { logs: {}, bestStreak: 0 };
+            data = { logs: {}, bestStreak: 0, goal: "Tap to set your goal..." };
             editingDate = getTodayString();
+            document.getElementById('user-goal').innerText = data.goal;
             saveData();
         }
     }
 
-    // --- ENGINE (Calculates Streaks & Penalties) ---
+    // --- ENGINE ---
     let currentStreak = 0;
     let isSick = false;
 
     function calculateEngine() {
         currentStreak = 0;
         isSick = false;
-        
-        // Calculate looking back from today up to 30 days to build the streak
         let breakFound = false;
         
         for (let i = 0; i < 30; i++) {
             let dStr = getOffsetDateString(-i);
             let log = data.logs[dStr];
             
-            // If it's today and empty, don't penalize yet (grace period for current day)
             if (i === 0 && (!log || (!log.workout && !log.restDay && !log.meals.b && !log.meals.l && !log.meals.d))) {
                 continue; 
             }
 
             if (!log) {
-                // Missing day breaks streak
                 breakFound = true;
-                if (i === 1) isSick = true; // Missed yesterday makes him sick today
+                if (i === 1) isSick = true;
                 continue;
             }
 
-            if (log.restDay) {
-                // Rest day carries streak forward without adding to it
-                continue;
-            }
+            if (log.restDay) continue;
 
-            // Calculate daily score
             let score = 0;
             if (log.workout) score += 2;
             ['b', 'l', 'd'].forEach(m => {
@@ -296,9 +302,8 @@
                 if (!breakFound) currentStreak++;
             } else if (score < 0) {
                 breakFound = true;
-                if (i <= 1) isSick = true; // Bad day yesterday or today
+                if (i <= 1) isSick = true;
             } else {
-                // Neutral day (score 0). If they did nothing, it's a break.
                 breakFound = true;
             }
         }
@@ -312,11 +317,9 @@
         const log = data.logs[editingDate];
         const isToday = editingDate === getTodayString();
 
-        // 1. Update Header
         document.getElementById('action-date-title').innerText = isToday ? "Today's Log" : "Editing: " + editingDate;
         document.getElementById('back-to-today').style.display = isToday ? 'none' : 'block';
         
-        // 2. Update Toggles
         const wBtn = document.getElementById('btn-workout');
         const rBtn = document.getElementById('btn-rest');
         const mealSec = document.getElementById('meal-section');
@@ -343,25 +346,20 @@
             mealSec.style.pointerEvents = 'auto';
         }
 
-        // 3. Update Meals
         ['b', 'l', 'd'].forEach(m => {
             document.getElementById(`m-${m}-h`).className = `meal-opt ${log.meals[m] === 'h' ? 'h-active' : ''}`;
             document.getElementById(`m-${m}-u`).className = `meal-opt ${log.meals[m] === 'u' ? 'u-active' : ''}`;
         });
 
-        // 4. Update Stats & Calendar
         document.getElementById('streak-count').innerText = currentStreak;
         document.getElementById('best-count').innerText = data.bestStreak;
         renderCalendar();
-        
-        // 5. Update Sprout Avatar
         updateSproutVisuals();
     }
 
     function renderCalendar() {
         const cal = document.getElementById('calendar-container');
         cal.innerHTML = '';
-        
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
         for (let i = 6; i >= 0; i--) {
@@ -370,7 +368,7 @@
             let dStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
             let dayLog = data.logs[dStr];
 
-            let statusClass = 'missed'; // default gray
+            let statusClass = 'missed';
             if (dayLog) {
                 if (dayLog.restDay) statusClass = 'rest';
                 else {
@@ -382,7 +380,7 @@
                     if (score < 0) statusClass = 'fail';
                 }
             }
-            if (i === 0 && !dayLog) statusClass = 'missed'; // Today empty is just empty, not necessarily missed yet
+            if (i === 0 && !dayLog) statusClass = 'missed'; 
 
             let div = document.createElement('div');
             div.className = `cal-day ${dStr === editingDate ? 'active' : ''}`;
@@ -403,38 +401,35 @@
         const cont = document.getElementById('sprout-container');
         const zzz = document.getElementById('sleep-zzz');
         
-        // Growth mechanic (Base radius 30, grows by 2 per streak day, max 48)
         let newRadius = 30 + (currentStreak * 2);
         if (newRadius > 48) newRadius = 48;
         body.setAttribute('r', newRadius);
 
-        // State Check
         let todayLog = data.logs[getTodayString()];
         
         if (todayLog && todayLog.restDay) {
             msg.innerText = "Shhh... Recharging! 💤";
             cont.className = ''; 
-            mouth.setAttribute('d', 'M 45 68 Q 50 68 55 68'); // Flat sleeping mouth
+            mouth.setAttribute('d', 'M 45 68 Q 50 68 55 68'); 
             zzz.style.display = 'block';
-            document.querySelectorAll('.eye').forEach(e => e.setAttribute('d', 'M40 60 L45 60')); // close eyes hack conceptually
+            document.querySelectorAll('.eye').forEach(e => e.setAttribute('d', 'M40 60 L45 60'));
         } else if (isSick) {
             msg.innerText = "I feel weak... save me! 🤒";
             cont.className = 'sad';
-            mouth.setAttribute('d', 'M 45 75 Q 50 70 55 75'); // Sad mouth
+            mouth.setAttribute('d', 'M 45 75 Q 50 70 55 75'); 
             zzz.style.display = 'none';
         } else if (currentStreak > 0) {
             msg.innerText = `Streak of ${currentStreak}! I'm growing! 🔥`;
             cont.className = 'bounce';
-            mouth.setAttribute('d', 'M 45 70 Q 50 78 55 70'); // Big happy mouth
+            mouth.setAttribute('d', 'M 45 70 Q 50 78 55 70'); 
             zzz.style.display = 'none';
         } else {
             msg.innerText = "Let's build a streak! 🌱";
             cont.className = 'bounce';
-            mouth.setAttribute('d', 'M 45 70 Q 50 75 55 70'); // Normal smile
+            mouth.setAttribute('d', 'M 45 70 Q 50 75 55 70'); 
             zzz.style.display = 'none';
         }
 
-        // Consequences: Accessories only equip if streak is maintained!
         document.getElementById('acc-bandana').style.display = currentStreak >= 5 ? 'block' : 'none';
         document.getElementById('acc-glasses').style.display = currentStreak >= 10 ? 'block' : 'none';
         document.getElementById('acc-crown').style.display = currentStreak >= 15 ? 'block' : 'none';
