@@ -107,16 +107,13 @@
                 <circle id="sprout-body" cx="50" cy="65" r="30" fill="#FFB6C1" />
                 <path id="sprout-leaf" d="M50 35 Q65 10 80 25 Q60 40 50 35" fill="#32CD32" />
                 
-                <!-- Open Eyes Group -->
-                <g id="eyes-open">
-                    <circle cx="40" cy="60" r="3" fill="#333" />
-                    <circle cx="60" cy="60" r="3" fill="#333" />
-                </g>
-                <!-- Closed Sleeping Eyes Group -->
-                <g id="eyes-closed" style="display: none;">
-                    <path d="M 37 60 Q 40 57 43 60" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round" />
-                    <path d="M 57 60 Q 60 57 63 60" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round" />
-                </g>
+                <!-- Open Eyes -->
+                <circle id="eye-left-open" cx="40" cy="60" r="3" fill="#333" opacity="1" visibility="visible" />
+                <circle id="eye-right-open" cx="60" cy="60" r="3" fill="#333" opacity="1" visibility="visible" />
+                
+                <!-- Closed Sleeping Eyes -->
+                <path id="eye-left-closed" d="M 37 60 Q 40 57 43 60" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round" opacity="0" visibility="hidden" />
+                <path id="eye-right-closed" d="M 57 60 Q 60 57 63 60" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round" opacity="0" visibility="hidden" />
 
                 <path id="sprout-mouth" d="M 45 70 Q 50 75 55 70" stroke="#333" stroke-width="2" fill="transparent" stroke-linecap="round"/>
                 <circle cx="32" cy="65" r="4" fill="#FF69B4" opacity="0.5" />
@@ -266,6 +263,7 @@
     </div>
 
     <button class="reset-btn" onclick="resetApp()">⚠️ Hard Reset Data</button>
+    <div style="text-align: center; font-size: 11px; color: #aaa; margin-top: 20px;">Sprout Tracker v3.1</div>
 </div>
 
 <div id="toast" class="toast">Saved!</div>
@@ -516,8 +514,6 @@
 
         let dayScore = calculateDayScore(log);
         document.getElementById('today-points').innerText = (dayScore > 0 ? "+" : "") + dayScore;
-
-        document.getElementById('latest-weight-display').innerText = latestWeighIn !== null ? latestWeighIn : "--";
         
         let target = parseFloat(data.targetWeight);
         let toGoDisplay = document.getElementById('weight-to-go-display');
@@ -667,20 +663,28 @@
 
         const log = data.logs[editingDate] || {};
         
-        const eyesOpen = document.getElementById('eyes-open');
-        const eyesClosed = document.getElementById('eyes-closed');
+        const eyeLO = document.getElementById('eye-left-open');
+        const eyeRO = document.getElementById('eye-right-open');
+        const eyeLC = document.getElementById('eye-left-closed');
+        const eyeRC = document.getElementById('eye-right-closed');
 
         if (Boolean(log.restDay) === true) {
             msg.innerText = "Shhh... Recharging! 💤";
             cont.className = ''; 
             mouth.setAttribute('d', 'M 45 68 Q 50 68 55 68'); 
             zzz.style.display = 'block';
-            if(eyesOpen) eyesOpen.style.display = 'none';
-            if(eyesClosed) eyesClosed.style.display = 'block';
+            
+            eyeLO.setAttribute('opacity', '0'); eyeLO.setAttribute('visibility', 'hidden');
+            eyeRO.setAttribute('opacity', '0'); eyeRO.setAttribute('visibility', 'hidden');
+            eyeLC.setAttribute('opacity', '1'); eyeLC.setAttribute('visibility', 'visible');
+            eyeRC.setAttribute('opacity', '1'); eyeRC.setAttribute('visibility', 'visible');
         } else {
             zzz.style.display = 'none';
-            if(eyesOpen) eyesOpen.style.display = 'block';
-            if(eyesClosed) eyesClosed.style.display = 'none';
+            
+            eyeLO.setAttribute('opacity', '1'); eyeLO.setAttribute('visibility', 'visible');
+            eyeRO.setAttribute('opacity', '1'); eyeRO.setAttribute('visibility', 'visible');
+            eyeLC.setAttribute('opacity', '0'); eyeLC.setAttribute('visibility', 'hidden');
+            eyeRC.setAttribute('opacity', '0'); eyeRC.setAttribute('visibility', 'hidden');
 
             if (isSick) {
                 msg.innerText = "I feel weak... save me! 🤒";
