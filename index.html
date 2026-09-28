@@ -65,7 +65,6 @@
         
         .editing-badge { background: #FFE4B5; color: #B8860B; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; cursor: pointer; display: none; }
         
-        /* Checkboxes & Inputs */
         .toggle-btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; background: var(--gray); color: #555; margin-bottom: 10px;}
         .toggle-btn.checked { background: var(--success); color: #006400; }
         .toggle-btn.rest-checked { background: var(--rest); color: #104E8B; }
@@ -76,13 +75,13 @@
         .meal-opt { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--gray); background: white; cursor: pointer; transition: 0.2s; }
         .meal-opt.h-active { background: var(--success); border-color: var(--success); color: darkgreen; font-weight: bold; }
         .meal-opt.u-active { background: #FF6B6B; border-color: #FF6B6B; color: white; font-weight: bold; }
+        .meal-opt.o-active { background: #FFFACD; border-color: #DAA520; color: #8B8B00; font-weight: bold; }
         
-        .daily-weight-input { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid var(--gray); font-size: 16px; text-align: center; outline: none; transition: 0.2s; }
+        .daily-weight-input { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid var(--gray); font-size: 16px; text-align: center; outline: none; transition: 0.2s; margin-bottom: 15px; }
         .daily-weight-input:focus { border-color: var(--primary-dark); }
 
         .reset-btn { width: 100%; padding: 15px; background: transparent; border: 2px dashed #FF6B6B; color: #FF6B6B; border-radius: 12px; cursor: pointer; font-weight: bold; margin-top: 30px; }
         
-        /* Modal */
         .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 24px; border-radius: 20px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 100; font-weight: bold; }
     </style>
 </head>
@@ -92,7 +91,6 @@
     <div class="stage">
         <h2 id="sprout-message" style="margin-top:0; margin-bottom: 20px; font-size: 20px;">Let's grow today!</h2>
         
-        <!-- Dynamic SVG Sprout -->
         <div id="sprout-container" class="bounce">
             <svg id="sprout-svg" width="160" height="160" viewBox="0 0 100 100">
                 <circle id="sprout-body" cx="50" cy="65" r="30" fill="#FFB6C1" />
@@ -132,18 +130,36 @@
         
         <div class="weight-hud">
             <div class="weight-box">
-                <div class="weight-box-title">Target Weight</div>
-                <input type="number" id="target-weight-input" class="weight-input-small" onblur="saveTargetWeight()" placeholder="0.0">
+                <div class="weight-box-title">Start Weight</div>
+                <input type="number" id="start-weight-input" class="weight-input-small" onblur="saveStartWeight()" placeholder="0.0">
             </div>
             <div class="weight-box">
-                <div class="weight-box-title">Latest Weigh-in</div>
-                <div class="weight-val" id="latest-weight-display">--</div>
+                <div class="weight-box-title">Target Weight</div>
+                <input type="number" id="target-weight-input" class="weight-input-small" onblur="saveTargetWeight()" placeholder="0.0">
             </div>
             <div class="weight-box highlight">
                 <div class="weight-box-title">To Go!</div>
                 <div class="weight-val" id="weight-to-go-display">--</div>
             </div>
         </div>
+
+        <div style="margin-top: 15px; background: var(--bg); padding: 12px; border-radius: 12px; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                <div class="weight-box-title" style="margin: 0;">Target Timeframe</div>
+                <input type="date" id="target-date-input" style="border:none; background:transparent; font-size:12px; font-weight:bold; color:var(--text); outline:none; font-family:inherit;" onblur="saveTargetDate()">
+            </div>
+            <div id="days-remaining" style="font-size: 12px; font-weight: bold; color: var(--primary-dark); margin-bottom: 12px;"></div>
+            
+            <div style="display:flex; justify-content:space-between; font-size: 10px; color: #888; margin-bottom: 4px; font-weight: bold; text-transform: uppercase;">
+                <span>Progress</span>
+                <span id="progress-percent">0%</span>
+            </div>
+            <div style="width: 100%; background: #D3D3D3; height: 8px; border-radius: 4px; overflow: hidden;">
+                <div id="progress-bar" style="width: 0%; background: var(--success); height: 100%; transition: 0.5s;"></div>
+            </div>
+        </div>
+
+        <div id="weight-graph" style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed var(--gray);"></div>
     </div>
 
     <!-- Calendar -->
@@ -192,6 +208,17 @@
                 </div>
             </div>
         </div>
+
+        <hr style="border: 0; border-top: 1px solid #EEE; margin: 20px 0;">
+
+        <div id="mood-section">
+            <h3 style="margin-top: 0; font-size: 16px; margin-bottom: 15px;">Mood</h3>
+            <div class="meal-opts" style="margin-bottom: 20px;">
+                <div id="mood-great" class="meal-opt" onclick="setMood('great')">🤩 Great</div>
+                <div id="mood-okay" class="meal-opt" onclick="setMood('okay')">😐 Okay</div>
+                <div id="mood-bad" class="meal-opt" onclick="setMood('bad')">😫 Bad</div>
+            </div>
+        </div>
         
         <hr style="border: 0; border-top: 1px solid #EEE; margin: 20px 0;">
         
@@ -226,28 +253,24 @@
         setTimeout(() => t.style.opacity = 0, 2000);
     }
 
-    // --- STATE MANAGEMENT ---
-    let data = JSON.parse(localStorage.getItem('sproutData')) || { logs: {}, bestStreak: 0, goal: "Tap to set your goal...", targetWeight: "" };
+    // --- STATE MANAGEMENT & MIGRATION ---
+    let data = JSON.parse(localStorage.getItem('sproutData')) || { logs: {}, bestStreak: 0, goal: "Tap to set your goal...", targetWeight: "", startingWeight: "", targetDate: "" };
     let editingDate = getTodayString();
 
-    // Data Migration for older saves that didn't have weight data
     if (data.targetWeight === undefined) data.targetWeight = "";
+    if (data.startingWeight === undefined) data.startingWeight = "";
+    if (data.targetDate === undefined) data.targetDate = "";
 
     document.getElementById('user-goal').innerText = data.goal || "Tap to set your goal...";
+    document.getElementById('start-weight-input').value = data.startingWeight;
     document.getElementById('target-weight-input').value = data.targetWeight;
+    document.getElementById('target-date-input').value = data.targetDate;
 
-    function saveGoal() {
-        data.goal = document.getElementById('user-goal').innerText;
-        saveData();
-        showToast("Goal Saved! 🎯");
-    }
-
-    function saveTargetWeight() {
-        data.targetWeight = document.getElementById('target-weight-input').value;
-        saveData();
-        showToast("Target Saved! 🎯");
-    }
-
+    function saveGoal() { data.goal = document.getElementById('user-goal').innerText; saveData(); showToast("Goal Saved! 🎯"); }
+    function saveStartWeight() { data.startingWeight = document.getElementById('start-weight-input').value; saveData(); showToast("Start Saved! ⚖️"); }
+    function saveTargetWeight() { data.targetWeight = document.getElementById('target-weight-input').value; saveData(); showToast("Target Saved! 🎯"); }
+    function saveTargetDate() { data.targetDate = document.getElementById('target-date-input').value; saveData(); showToast("Date Saved! 📅"); }
+    
     function saveDailyWeight() {
         initDay(editingDate);
         data.logs[editingDate].weight = document.getElementById('daily-weight-input').value;
@@ -257,9 +280,10 @@
 
     function initDay(dateStr) {
         if (!data.logs[dateStr]) {
-            data.logs[dateStr] = { workout: false, restDay: false, meals: { b: null, l: null, d: null }, weight: "" };
-        } else if (data.logs[dateStr].weight === undefined) {
-            data.logs[dateStr].weight = ""; // Safe migration for existing days
+            data.logs[dateStr] = { workout: false, restDay: false, meals: { b: null, l: null, d: null }, weight: "", mood: null };
+        } else {
+            if (data.logs[dateStr].weight === undefined) data.logs[dateStr].weight = "";
+            if (data.logs[dateStr].mood === undefined) data.logs[dateStr].mood = null;
         }
     }
 
@@ -292,13 +316,24 @@
     function setMeal(mealType, healthType) {
         initDay(editingDate);
         if (data.logs[editingDate].restDay) return; 
-        
         if (data.logs[editingDate].meals[mealType] === healthType) {
             data.logs[editingDate].meals[mealType] = null;
         } else {
             data.logs[editingDate].meals[mealType] = healthType;
         }
         saveData();
+    }
+
+    function setMood(moodType) {
+        initDay(editingDate);
+        if (data.logs[editingDate].restDay) return;
+        if (data.logs[editingDate].mood === moodType) {
+            data.logs[editingDate].mood = null;
+        } else {
+            data.logs[editingDate].mood = moodType;
+        }
+        saveData();
+        showToast("Mood logged! 🎭");
     }
 
     function setEditingDate(dateStr) {
@@ -309,10 +344,12 @@
     function resetApp() {
         if(confirm("Are you sure? This deletes all history and resets Sprout to baby size.")) {
             localStorage.removeItem('sproutData');
-            data = { logs: {}, bestStreak: 0, goal: "Tap to set your goal...", targetWeight: "" };
+            data = { logs: {}, bestStreak: 0, goal: "Tap to set your goal...", targetWeight: "", startingWeight: "", targetDate: "" };
             editingDate = getTodayString();
             document.getElementById('user-goal').innerText = data.goal;
+            document.getElementById('start-weight-input').value = data.startingWeight;
             document.getElementById('target-weight-input').value = data.targetWeight;
+            document.getElementById('target-date-input').value = data.targetDate;
             saveData();
         }
     }
@@ -332,12 +369,10 @@
             let dStr = getOffsetDateString(-i);
             let log = data.logs[dStr];
             
-            // Find most recent weight logic
             if (latestWeighIn === null && log && log.weight && log.weight !== "") {
                 latestWeighIn = parseFloat(log.weight);
             }
 
-            // Streak Logic (only checks past 30 days)
             if (i < 30) {
                 if (i === 0 && (!log || (!log.workout && !log.restDay && !log.meals.b && !log.meals.l && !log.meals.d))) {
                     continue; 
@@ -382,26 +417,15 @@
         const rBtn = document.getElementById('btn-rest');
         const mealSec = document.getElementById('meal-section');
 
-        if (log.workout) {
-            wBtn.className = 'toggle-btn checked';
-            document.getElementById('check-workout').innerText = '✅';
-        } else {
-            wBtn.className = 'toggle-btn';
-            document.getElementById('check-workout').innerText = '⚪';
-        }
+        if (log.workout) { wBtn.className = 'toggle-btn checked'; document.getElementById('check-workout').innerText = '✅'; } 
+        else { wBtn.className = 'toggle-btn'; document.getElementById('check-workout').innerText = '⚪'; }
 
         if (log.restDay) {
-            rBtn.className = 'toggle-btn rest-checked';
-            document.getElementById('check-rest').innerText = '✅';
-            wBtn.style.opacity = '0.5';
-            mealSec.style.opacity = '0.3';
-            mealSec.style.pointerEvents = 'none';
+            rBtn.className = 'toggle-btn rest-checked'; document.getElementById('check-rest').innerText = '✅';
+            wBtn.style.opacity = '0.5'; mealSec.style.opacity = '0.3'; mealSec.style.pointerEvents = 'none';
         } else {
-            rBtn.className = 'toggle-btn';
-            document.getElementById('check-rest').innerText = '⚪';
-            wBtn.style.opacity = '1';
-            mealSec.style.opacity = '1';
-            mealSec.style.pointerEvents = 'auto';
+            rBtn.className = 'toggle-btn'; document.getElementById('check-rest').innerText = '⚪';
+            wBtn.style.opacity = '1'; mealSec.style.opacity = '1'; mealSec.style.pointerEvents = 'auto';
         }
 
         ['b', 'l', 'd'].forEach(m => {
@@ -409,25 +433,117 @@
             document.getElementById(`m-${m}-u`).className = `meal-opt ${log.meals[m] === 'u' ? 'u-active' : ''}`;
         });
 
-        // Update Daily Weight Input
-        document.getElementById('daily-weight-input').value = log.weight || "";
+        let mBtnG = document.getElementById('mood-great');
+        let mBtnO = document.getElementById('mood-okay');
+        let mBtnB = document.getElementById('mood-bad');
+        mBtnG.className = `meal-opt ${log.mood === 'great' ? 'h-active' : ''}`;
+        mBtnO.className = `meal-opt ${log.mood === 'okay' ? 'o-active' : ''}`;
+        mBtnB.className = `meal-opt ${log.mood === 'bad' ? 'u-active' : ''}`;
 
-        // Update Target / Progress Display
-        document.getElementById('latest-weight-display').innerText = latestWeighIn !== null ? latestWeighIn : "--";
+        document.getElementById('daily-weight-input').value = log.weight || "";
         
+        // Progress Calcs
+        let start = parseFloat(data.startingWeight);
         let target = parseFloat(data.targetWeight);
         let toGoDisplay = document.getElementById('weight-to-go-display');
+        let pBar = document.getElementById('progress-bar');
+        let pText = document.getElementById('progress-percent');
+        
         if (!isNaN(target) && latestWeighIn !== null) {
-            let diff = Math.abs(latestWeighIn - target).toFixed(1);
-            toGoDisplay.innerText = diff;
+            toGoDisplay.innerText = Math.abs(latestWeighIn - target).toFixed(1);
         } else {
             toGoDisplay.innerText = "--";
+        }
+
+        if (!isNaN(start) && !isNaN(target) && latestWeighIn !== null && start !== target) {
+            let totalToLose = Math.abs(start - target);
+            let lostSoFar = Math.abs(start - latestWeighIn);
+            let pct = Math.max(0, Math.min(100, (lostSoFar / totalToLose) * 100));
+            pBar.style.width = pct + '%';
+            pText.innerText = Math.round(pct) + '%';
+        } else {
+            pBar.style.width = '0%';
+            pText.innerText = '0%';
+        }
+
+        // Timeframe Calcs
+        let daysRemDiv = document.getElementById('days-remaining');
+        if (data.targetDate) {
+            let tDate = new Date(data.targetDate);
+            let today = new Date();
+            let diffTime = tDate - today;
+            let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays > 0) daysRemDiv.innerText = `⏳ ${diffDays} days remaining to hit your target!`;
+            else if (diffDays === 0) daysRemDiv.innerText = `⏳ Target date is today!`;
+            else daysRemDiv.innerText = `⏰ Target date passed by ${Math.abs(diffDays)} days.`;
+        } else {
+            daysRemDiv.innerText = `Tap to set a target date ☝️`;
         }
 
         document.getElementById('streak-count').innerText = currentStreak;
         document.getElementById('best-count').innerText = data.bestStreak;
         renderCalendar();
+        renderGraph();
         updateSproutVisuals();
+    }
+
+    function renderGraph() {
+        const graphCont = document.getElementById('weight-graph');
+        let points = [];
+        for(let date in data.logs) {
+            if(data.logs[date].weight) {
+                points.push({date: new Date(date).getTime(), val: parseFloat(data.logs[date].weight)});
+            }
+        }
+        points.sort((a,b) => a.date - b.date);
+        
+        if(points.length < 2) {
+            graphCont.innerHTML = '<div style="padding:20px; text-align:center; color:#888; font-size:12px; font-weight:bold;">Log your weight for at least 2 days to see your trend graph! 📈</div>';
+            return;
+        }
+
+        let minVal = Math.min(...points.map(p => p.val));
+        let maxVal = Math.max(...points.map(p => p.val));
+        let target = parseFloat(data.targetWeight);
+        if(!isNaN(target)) {
+            minVal = Math.min(minVal, target);
+            maxVal = Math.max(maxVal, target);
+        }
+        
+        let range = maxVal - minVal;
+        if(range === 0) range = 10;
+        minVal -= range * 0.1;
+        maxVal += range * 0.1;
+
+        let minTime = points[0].date;
+        let maxTime = points[points.length-1].date;
+        let timeRange = maxTime - minTime;
+        if(timeRange === 0) timeRange = 1;
+
+        let polyPoints = points.map(p => {
+            let x = ((p.date - minTime) / timeRange) * 100;
+            let y = 100 - (((p.val - minVal) / (maxVal - minVal)) * 100);
+            return `${x},${y}`;
+        }).join(' ');
+
+        let targetLine = '';
+        if(!isNaN(target)) {
+            let ty = 100 - (((target - minVal) / (maxVal - minVal)) * 100);
+            targetLine = `<line x1="0" y1="${ty}" x2="100" y2="${ty}" stroke="#FFB6C1" stroke-width="1.5" stroke-dasharray="4" />`;
+        }
+
+        graphCont.innerHTML = `
+            <div style="font-size: 10px; font-weight: bold; color: #888; text-transform: uppercase; margin-bottom: 5px;">Progress Graph</div>
+            <svg viewBox="0 0 100 100" style="width:100%; height:120px; overflow:visible;">
+                ${targetLine}
+                <polyline fill="none" stroke="#FF69B4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="${polyPoints}" />
+                ${points.map(p => {
+                    let x = ((p.date - minTime) / timeRange) * 100;
+                    let y = 100 - (((p.val - minVal) / (maxVal - minVal)) * 100);
+                    return `<circle cx="${x}" cy="${y}" r="2" fill="#FF69B4" />`;
+                }).join('')}
+            </svg>
+        `;
     }
 
     function renderCalendar() {
