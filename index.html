@@ -66,8 +66,8 @@
         
         .editing-badge { background: #FFE4B5; color: #B8860B; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; cursor: pointer; display: none; }
         
-        .toggle-group { display: flex; gap: 10px; margin-bottom: 10px; }
-        .toggle-opt { flex: 1; padding: 12px 8px; border-radius: 10px; border: 1px solid var(--gray); background: white; text-align: center; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 13px; }
+        .toggle-group { display: flex; gap: 8px; margin-bottom: 10px; }
+        .toggle-opt { flex: 1; padding: 12px 6px; border-radius: 10px; border: 1px solid var(--gray); background: white; text-align: center; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 12px; }
         .toggle-opt.yes-active { background: var(--success); border-color: var(--success); color: #006400; }
         .toggle-opt.no-active { background: #FFB6C1; border-color: #FFB6C1; color: #8B0000; }
         .toggle-opt.rest-active { background: var(--rest); border-color: var(--rest); color: #104E8B; }
@@ -102,8 +102,14 @@
             <svg id="sprout-svg" width="160" height="160" viewBox="0 0 100 100">
                 <circle id="sprout-body" cx="50" cy="65" r="30" fill="#FFB6C1" />
                 <path id="sprout-leaf" d="M50 35 Q65 10 80 25 Q60 40 50 35" fill="#32CD32" />
-                <circle class="eye" cx="40" cy="60" r="3" fill="#333" />
-                <circle class="eye" cx="60" cy="60" r="3" fill="#333" />
+                
+                <!-- Eyes (Open by default) -->
+                <circle id="eye-left-open" cx="40" cy="60" r="3" fill="#333" />
+                <circle id="eye-right-open" cx="60" cy="60" r="3" fill="#333" />
+                <!-- Closed Eyes (Hidden by default) -->
+                <path id="eye-left-closed" d="M 37 60 L 43 60" stroke="#333" stroke-width="2" stroke-linecap="round" style="display:none;" />
+                <path id="eye-right-closed" d="M 57 60 L 63 60" stroke="#333" stroke-width="2" stroke-linecap="round" style="display:none;" />
+
                 <path id="sprout-mouth" d="M 45 70 Q 50 75 55 70" stroke="#333" stroke-width="2" fill="transparent" stroke-linecap="round"/>
                 <circle cx="32" cy="65" r="4" fill="#FF69B4" opacity="0.5" />
                 <circle cx="68" cy="65" r="4" fill="#FF69B4" opacity="0.5" />
@@ -180,11 +186,11 @@
             <div id="back-to-today" class="editing-badge" onclick="setEditingDate(getTodayString())">Back to Today ↩</div>
         </div>
 
-        <!-- Workout Radio/Buttons with explicit points -->
+        <!-- Workout Radio/Buttons with explicit points (No is now -1) -->
         <label style="font-size: 12px; font-weight: bold; color: #888; text-transform: uppercase; display: block; margin-bottom: 5px;">Hit the Gym?</label>
         <div class="toggle-group">
             <div id="gym-yes" class="toggle-opt" onclick="setWorkout('yes')">✅ Yes (+2)</div>
-            <div id="gym-no" class="toggle-opt" onclick="setWorkout('no')">❌ No (0)</div>
+            <div id="gym-no" class="toggle-opt" onclick="setWorkout('no')">❌ No (-1)</div>
             <div id="gym-rest" class="toggle-opt" onclick="setWorkout('rest')">💤 Rest</div>
         </div>
 
@@ -351,6 +357,7 @@
             data.logs[editingDate].restDay = false;
             data.logs[editingDate].workout = choice; 
             if (choice === 'yes') showToast("+2 pts: Workout Logged!");
+            if (choice === 'no') showToast("-1 pt: No Workout");
         }
         saveData();
     }
@@ -408,6 +415,7 @@
         if (log.restDay) return 0;
         let score = 0;
         if (log.workout === 'yes') score += 2;
+        if (log.workout === 'no') score -= 1; // Negative penalty for missing gym
         ['b', 'l', 'd'].forEach(m => {
             if (log.meals[m] === 'h') score += 1;
             if (log.meals[m] === 'u') score -= 1;
@@ -431,7 +439,7 @@
             }
 
             if (i < 30) {
-                if (i === 0 && (!log || (log.workout !== 'yes' && !log.restDay && !log.meals.b && !log.meals.l && !log.meals.d))) {
+                if (i === 0 && (!log || (log.workout !== 'yes' && log.workout !== 'no' && !log.restDay && !log.meals.b && !log.meals.l && !log.meals.d))) {
                     continue; 
                 }
                 if (!log) {
@@ -497,7 +505,6 @@
         document.getElementById('wake-time').value = log.wakeTime || "";
         document.getElementById('step-count').value = log.steps || "";
 
-        // Today's Points Calculation Display
         let dayScore = calculateDayScore(log);
         document.getElementById('today-points').innerText = (dayScore > 0 ? "+" : "") + dayScore;
 
@@ -656,22 +663,32 @@
             cont.className = ''; 
             mouth.setAttribute('d', 'M 45 68 Q 50 68 55 68'); 
             zzz.style.display = 'block';
-            document.querySelectorAll('.eye').forEach(e => e.setAttribute('d', 'M40 60 L45 60'));
-        } else if (isSick) {
-            msg.innerText = "I feel weak... save me! 🤒";
-            cont.className = 'sad';
-            mouth.setAttribute('d', 'M 45 75 Q 50 70 55 75'); 
-            zzz.style.display = 'none';
-        } else if (currentStreak > 0) {
-            msg.innerText = `Streak of ${currentStreak}! I'm growing! 🔥`;
-            cont.className = 'bounce';
-            mouth.setAttribute('d', 'M 45 70 Q 50 78 55 70'); 
-            zzz.style.display = 'none';
+            document.getElementById('eye-left-open').style.display = 'none';
+            document.getElementById('eye-right-open').style.display = 'none';
+            document.getElementById('eye-left-closed').style.display = 'block';
+            document.getElementById('eye-right-closed').style.display = 'block';
         } else {
-            msg.innerText = "Let's build a streak! 🌱";
-            cont.className = 'bounce';
-            mouth.setAttribute('d', 'M 45 70 Q 50 75 55 70'); 
-            zzz.style.display = 'none';
+            document.getElementById('eye-left-open').style.display = 'block';
+            document.getElementById('eye-right-open').style.display = 'block';
+            document.getElementById('eye-left-closed').style.display = 'none';
+            document.getElementById('eye-right-closed').style.display = 'none';
+
+            if (isSick) {
+                msg.innerText = "I feel weak... save me! 🤒";
+                cont.className = 'sad';
+                mouth.setAttribute('d', 'M 45 75 Q 50 70 55 75'); 
+                zzz.style.display = 'none';
+            } else if (currentStreak > 0) {
+                msg.innerText = `Streak of ${currentStreak}! I'm growing! 🔥`;
+                cont.className = 'bounce';
+                mouth.setAttribute('d', 'M 45 70 Q 50 78 55 70'); 
+                zzz.style.display = 'none';
+            } else {
+                msg.innerText = "Let's build a streak! 🌱";
+                cont.className = 'bounce';
+                mouth.setAttribute('d', 'M 45 70 Q 50 75 55 70'); 
+                zzz.style.display = 'none';
+            }
         }
 
         document.getElementById('acc-bandana').style.display = currentStreak >= 5 ? 'block' : 'none';
