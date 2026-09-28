@@ -15,6 +15,7 @@
             --danger: #FFB6C1;
             --gray: #E0E0E0;
             --rest: #B0C4DE;
+            --skipped: #E6E6FA;
         }
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--bg); margin: 0; padding: 20px; color: var(--text); padding-bottom: 80px; }
@@ -28,8 +29,8 @@
         .sad { animation: none; filter: grayscale(40%); }
         
         /* Stats */
-        .stats-row { display: flex; justify-content: space-around; margin-top: 15px; font-weight: bold; }
-        .stat-pill { background: var(--bg); padding: 8px 16px; border-radius: 20px; font-size: 14px; }
+        .stats-row { display: flex; justify-content: space-around; margin-top: 15px; font-weight: bold; gap: 8px; }
+        .stat-pill { background: var(--bg); padding: 8px 12px; border-radius: 20px; font-size: 13px; flex: 1; }
         
         /* Goal Section */
         .goal-card { background: var(--card); border-radius: 16px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); text-align: center; }
@@ -65,23 +66,29 @@
         
         .editing-badge { background: #FFE4B5; color: #B8860B; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; cursor: pointer; display: none; }
         
-        .toggle-btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; background: var(--gray); color: #555; margin-bottom: 10px;}
-        .toggle-btn.checked { background: var(--success); color: #006400; }
-        .toggle-btn.rest-checked { background: var(--rest); color: #104E8B; }
-        
+        .toggle-group { display: flex; gap: 10px; margin-bottom: 10px; }
+        .toggle-opt { flex: 1; padding: 12px 8px; border-radius: 10px; border: 1px solid var(--gray); background: white; text-align: center; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 13px; }
+        .toggle-opt.yes-active { background: var(--success); border-color: var(--success); color: #006400; }
+        .toggle-opt.no-active { background: #FFB6C1; border-color: #FFB6C1; color: #8B0000; }
+        .toggle-opt.rest-active { background: var(--rest); border-color: var(--rest); color: #104E8B; }
+
         .meal-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-        .meal-name { font-weight: 500; width: 80px; }
-        .meal-opts { display: flex; gap: 8px; }
-        .meal-opt { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--gray); background: white; cursor: pointer; transition: 0.2s; }
+        .meal-name { font-weight: 500; width: 75px; font-size: 14px; }
+        .meal-opts { display: flex; gap: 6px; flex: 1; justify-content: flex-end; }
+        .meal-opt { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--gray); background: white; cursor: pointer; font-size: 12px; transition: 0.2s; text-align: center; }
         .meal-opt.h-active { background: var(--success); border-color: var(--success); color: darkgreen; font-weight: bold; }
-        .meal-opt.u-active { background: #FF6B6B; border-color: #FF6B6B; color: white; font-weight: bold; }
-        .meal-opt.o-active { background: #FFFACD; border-color: #DAA520; color: #8B8B00; font-weight: bold; }
+        .meal-opt.u-active { background: #FF6B6B; border-color: #FFB6C1; color: white; font-weight: bold; }
+        .meal-opt.s-active { background: var(--skipped); border-color: #9370DB; color: #4B0082; font-weight: bold; }
         
-        .daily-weight-input { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid var(--gray); font-size: 16px; text-align: center; outline: none; transition: 0.2s; margin-bottom: 15px; }
+        .input-grid { display: flex; gap: 10px; margin-bottom: 15px; }
+        .input-box { flex: 1; background: var(--bg); padding: 10px; border-radius: 12px; text-align: center; }
+        .input-box label { font-size: 10px; font-weight: bold; color: #888; display: block; margin-bottom: 4px; text-transform: uppercase; }
+        .input-box input { width: 100%; border: none; background: transparent; font-size: 14px; font-weight: bold; text-align: center; outline: none; color: var(--text); }
+
+        .daily-weight-input { width: 100%; padding: 12px; border-radius: 12px; border: 2px solid var(--gray); font-size: 15px; text-align: center; outline: none; transition: 0.2s; margin-bottom: 15px; }
         .daily-weight-input:focus { border-color: var(--primary-dark); }
 
-        .reset-btn { width: 100%; padding: 15px; background: transparent; border: 2px dashed #FF6B6B; color: #FF6B6B; border-radius: 12px; cursor: pointer; font-weight: bold; margin-top: 30px; }
-        
+        .reset-btn { width: 100%; padding: 15px; background: transparent; border: 2px dashed #FFB6C1; color: #D87093; border-radius: 12px; cursor: pointer; font-weight: bold; margin-top: 30px; }
         .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 24px; border-radius: 20px; opacity: 0; transition: 0.3s; pointer-events: none; z-index: 100; font-weight: bold; }
     </style>
 </head>
@@ -118,6 +125,7 @@
         </div>
 
         <div class="stats-row">
+            <div class="stat-pill">⚡ Pts: <span id="today-points">0</span></div>
             <div class="stat-pill">🔥 Streak: <span id="streak-count">0</span></div>
             <div class="stat-pill">⭐ Best: <span id="best-count">0</span></div>
         </div>
@@ -172,58 +180,76 @@
             <div id="back-to-today" class="editing-badge" onclick="setEditingDate(getTodayString())">Back to Today ↩</div>
         </div>
 
-        <button id="btn-workout" class="toggle-btn" onclick="toggleWorkout()">
-            <span>🏋️ Hit the Gym</span>
-            <span id="check-workout">⚪</span>
-        </button>
-        
-        <button id="btn-rest" class="toggle-btn" onclick="toggleRest()">
-            <span>💤 Rest Day</span>
-            <span id="check-rest">⚪</span>
-        </button>
+        <!-- Workout Radio/Buttons with explicit points -->
+        <label style="font-size: 12px; font-weight: bold; color: #888; text-transform: uppercase; display: block; margin-bottom: 5px;">Hit the Gym?</label>
+        <div class="toggle-group">
+            <div id="gym-yes" class="toggle-opt" onclick="setWorkout('yes')">✅ Yes (+2)</div>
+            <div id="gym-no" class="toggle-opt" onclick="setWorkout('no')">❌ No (0)</div>
+            <div id="gym-rest" class="toggle-opt" onclick="setWorkout('rest')">💤 Rest</div>
+        </div>
 
-        <hr style="border: 0; border-top: 1px solid #EEE; margin: 20px 0;">
+        <hr style="border: 0; border-top: 1px solid #EEE; margin: 15px 0;">
 
+        <!-- Meals with explicit points -->
         <div id="meal-section">
-            <h3 style="margin-top: 0; font-size: 16px; margin-bottom: 15px;">Meals</h3>
+            <h3 style="margin-top: 0; font-size: 16px; margin-bottom: 12px;">Meals</h3>
             <div class="meal-row">
                 <div class="meal-name">Breakfast</div>
                 <div class="meal-opts">
-                    <div id="m-b-h" class="meal-opt" onclick="setMeal('b', 'h')">🥗 Good</div>
-                    <div id="m-b-u" class="meal-opt" onclick="setMeal('b', 'u')">🍕 Bad</div>
+                    <div id="m-b-h" class="meal-opt" onclick="setMeal('b', 'h')">🥗 Good (+1)</div>
+                    <div id="m-b-u" class="meal-opt" onclick="setMeal('b', 'u')">🍕 Bad (-1)</div>
+                    <div id="m-b-s" class="meal-opt" onclick="setMeal('b', 's')">⏱️ Skip (0)</div>
                 </div>
             </div>
             <div class="meal-row">
                 <div class="meal-name">Lunch</div>
                 <div class="meal-opts">
-                    <div id="m-l-h" class="meal-opt" onclick="setMeal('l', 'h')">🥗 Good</div>
-                    <div id="m-l-u" class="meal-opt" onclick="setMeal('l', 'u')">🍕 Bad</div>
+                    <div id="m-l-h" class="meal-opt" onclick="setMeal('l', 'h')">🥗 Good (+1)</div>
+                    <div id="m-l-u" class="meal-opt" onclick="setMeal('l', 'u')">🍕 Bad (-1)</div>
+                    <div id="m-l-s" class="meal-opt" onclick="setMeal('l', 's')">⏱️ Skip (0)</div>
                 </div>
             </div>
             <div class="meal-row">
                 <div class="meal-name">Dinner</div>
                 <div class="meal-opts">
-                    <div id="m-d-h" class="meal-opt" onclick="setMeal('d', 'h')">🥗 Good</div>
-                    <div id="m-d-u" class="meal-opt" onclick="setMeal('d', 'u')">🍕 Bad</div>
+                    <div id="m-d-h" class="meal-opt" onclick="setMeal('d', 'h')">🥗 Good (+1)</div>
+                    <div id="m-d-u" class="meal-opt" onclick="setMeal('d', 'u')">🍕 Bad (-1)</div>
+                    <div id="m-d-s" class="meal-opt" onclick="setMeal('d', 's')">⏱️ Skip (0)</div>
                 </div>
             </div>
         </div>
 
-        <hr style="border: 0; border-top: 1px solid #EEE; margin: 20px 0;">
+        <hr style="border: 0; border-top: 1px solid #EEE; margin: 15px 0;">
+
+        <!-- Sleep & Step Inputs -->
+        <div class="input-grid">
+            <div class="input-box">
+                <label>Bedtime</label>
+                <input type="time" id="sleep-time" onblur="saveSleepTime()">
+            </div>
+            <div class="input-box">
+                <label>Wake-up</label>
+                <input type="time" id="wake-time" onblur="saveWakeTime()">
+            </div>
+            <div class="input-box">
+                <label>Steps</label>
+                <input type="number" id="step-count" placeholder="Steps" onblur="saveSteps()">
+            </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #EEE; margin: 15px 0;">
 
         <div id="mood-section">
-            <h3 style="margin-top: 0; font-size: 16px; margin-bottom: 15px;">Mood</h3>
-            <div class="meal-opts" style="margin-bottom: 20px;">
-                <div id="mood-great" class="meal-opt" onclick="setMood('great')">🤩 Great</div>
-                <div id="mood-okay" class="meal-opt" onclick="setMood('okay')">😐 Okay</div>
-                <div id="mood-bad" class="meal-opt" onclick="setMood('bad')">😫 Bad</div>
+            <h3 style="margin-top: 0; font-size: 16px; margin-bottom: 12px;">Mood</h3>
+            <div class="meal-opts" style="display: flex; gap: 10px; margin-bottom: 15px; justify-content: stretch;">
+                <div id="mood-great" class="meal-opt" style="flex:1; text-align:center;" onclick="setMood('great')">🤩 Great</div>
+                <div id="mood-okay" class="meal-opt" style="flex:1; text-align:center;" onclick="setMood('okay')">😐 Okay</div>
+                <div id="mood-bad" class="meal-opt" style="flex:1; text-align:center;" onclick="setMood('bad')">😫 Bad</div>
             </div>
         </div>
         
-        <hr style="border: 0; border-top: 1px solid #EEE; margin: 20px 0;">
-        
         <div>
-            <h3 style="margin-top: 0; font-size: 16px; margin-bottom: 15px;">Daily Scale</h3>
+            <h3 style="margin-top: 0; font-size: 16px; margin-bottom: 10px;">Daily Scale</h3>
             <input type="number" id="daily-weight-input" class="daily-weight-input" onblur="saveDailyWeight()" placeholder="Enter your weight for this day...">
         </div>
     </div>
@@ -234,7 +260,6 @@
 <div id="toast" class="toast">Saved!</div>
 
 <script>
-    // --- UTILS ---
     function getTodayString() {
         const d = new Date();
         return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -253,7 +278,6 @@
         setTimeout(() => t.style.opacity = 0, 2000);
     }
 
-    // --- STATE MANAGEMENT & MIGRATION ---
     let data = JSON.parse(localStorage.getItem('sproutData')) || { logs: {}, bestStreak: 0, goal: "Tap to set your goal...", targetWeight: "", startingWeight: "", targetDate: "" };
     let editingDate = getTodayString();
 
@@ -278,12 +302,35 @@
         showToast("Weight Logged! ⚖️");
     }
 
+    function saveSleepTime() {
+        initDay(editingDate);
+        data.logs[editingDate].sleepTime = document.getElementById('sleep-time').value;
+        saveData();
+    }
+
+    function saveWakeTime() {
+        initDay(editingDate);
+        data.logs[editingDate].wakeTime = document.getElementById('wake-time').value;
+        saveData();
+    }
+
+    function saveSteps() {
+        initDay(editingDate);
+        data.logs[editingDate].steps = document.getElementById('step-count').value;
+        saveData();
+    }
+
     function initDay(dateStr) {
         if (!data.logs[dateStr]) {
-            data.logs[dateStr] = { workout: false, restDay: false, meals: { b: null, l: null, d: null }, weight: "", mood: null };
+            data.logs[dateStr] = { workout: 'no', restDay: false, meals: { b: null, l: null, d: null }, weight: "", mood: null, sleepTime: "", wakeTime: "", steps: "" };
         } else {
             if (data.logs[dateStr].weight === undefined) data.logs[dateStr].weight = "";
             if (data.logs[dateStr].mood === undefined) data.logs[dateStr].mood = null;
+            if (data.logs[dateStr].workout === undefined) data.logs[dateStr].workout = 'no';
+            if (data.logs[dateStr].restDay === undefined) data.logs[dateStr].restDay = false;
+            if (data.logs[dateStr].sleepTime === undefined) data.logs[dateStr].sleepTime = "";
+            if (data.logs[dateStr].wakeTime === undefined) data.logs[dateStr].wakeTime = "";
+            if (data.logs[dateStr].steps === undefined) data.logs[dateStr].steps = "";
         }
     }
 
@@ -293,22 +340,17 @@
         render();
     }
 
-    // --- ACTIONS ---
-    function toggleWorkout() {
+    function setWorkout(choice) {
         initDay(editingDate);
-        if (data.logs[editingDate].restDay) data.logs[editingDate].restDay = false;
-        data.logs[editingDate].workout = !data.logs[editingDate].workout;
-        if(data.logs[editingDate].workout) showToast("+ Workout Logged!");
-        saveData();
-    }
-
-    function toggleRest() {
-        initDay(editingDate);
-        data.logs[editingDate].restDay = !data.logs[editingDate].restDay;
-        if(data.logs[editingDate].restDay) {
-            data.logs[editingDate].workout = false; 
-            data.logs[editingDate].meals = { b: null, l: null, d: null }; 
+        if (choice === 'rest') {
+            data.logs[editingDate].restDay = true;
+            data.logs[editingDate].workout = 'no';
+            data.logs[editingDate].meals = { b: null, l: null, d: null };
             showToast("Rest Day Active 💤");
+        } else {
+            data.logs[editingDate].restDay = false;
+            data.logs[editingDate].workout = choice; 
+            if (choice === 'yes') showToast("+2 pts: Workout Logged!");
         }
         saveData();
     }
@@ -320,6 +362,9 @@
             data.logs[editingDate].meals[mealType] = null;
         } else {
             data.logs[editingDate].meals[mealType] = healthType;
+            if (healthType === 'h') showToast("+1 pt: Healthy Meal!");
+            if (healthType === 'u') showToast("-1 pt: Unhealthy Meal");
+            if (healthType === 's') showToast("0 pts: Meal Skipped");
         }
         saveData();
     }
@@ -354,10 +399,22 @@
         }
     }
 
-    // --- ENGINE ---
     let currentStreak = 0;
     let isSick = false;
     let latestWeighIn = null;
+
+    function calculateDayScore(log) {
+        if (!log) return 0;
+        if (log.restDay) return 0;
+        let score = 0;
+        if (log.workout === 'yes') score += 2;
+        ['b', 'l', 'd'].forEach(m => {
+            if (log.meals[m] === 'h') score += 1;
+            if (log.meals[m] === 'u') score -= 1;
+            if (log.meals[m] === 's') score += 0;
+        });
+        return score;
+    }
 
     function calculateEngine() {
         currentStreak = 0;
@@ -374,7 +431,7 @@
             }
 
             if (i < 30) {
-                if (i === 0 && (!log || (!log.workout && !log.restDay && !log.meals.b && !log.meals.l && !log.meals.d))) {
+                if (i === 0 && (!log || (log.workout !== 'yes' && !log.restDay && !log.meals.b && !log.meals.l && !log.meals.d))) {
                     continue; 
                 }
                 if (!log) {
@@ -384,12 +441,7 @@
                 }
                 if (log.restDay) continue;
 
-                let score = 0;
-                if (log.workout) score += 2;
-                ['b', 'l', 'd'].forEach(m => {
-                    if (log.meals[m] === 'h') score += 1;
-                    if (log.meals[m] === 'u') score -= 1;
-                });
+                let score = calculateDayScore(log);
 
                 if (score > 0) {
                     if (!breakFound) currentStreak++;
@@ -404,7 +456,6 @@
         if (currentStreak > data.bestStreak) data.bestStreak = currentStreak;
     }
 
-    // --- RENDER UI ---
     function render() {
         initDay(editingDate);
         const log = data.logs[editingDate];
@@ -413,48 +464,56 @@
         document.getElementById('action-date-title').innerText = isToday ? "Today's Log" : "Editing: " + editingDate;
         document.getElementById('back-to-today').style.display = isToday ? 'none' : 'block';
         
-        const wBtn = document.getElementById('btn-workout');
-        const rBtn = document.getElementById('btn-rest');
+        const gYes = document.getElementById('gym-yes');
+        const gNo = document.getElementById('gym-no');
+        const gRest = document.getElementById('gym-rest');
         const mealSec = document.getElementById('meal-section');
 
-        if (log.workout) { wBtn.className = 'toggle-btn checked'; document.getElementById('check-workout').innerText = '✅'; } 
-        else { wBtn.className = 'toggle-btn'; document.getElementById('check-workout').innerText = '⚪'; }
+        gYes.className = 'toggle-opt';
+        gNo.className = 'toggle-opt';
+        gRest.className = 'toggle-opt';
 
         if (log.restDay) {
-            rBtn.className = 'toggle-btn rest-checked'; document.getElementById('check-rest').innerText = '✅';
-            wBtn.style.opacity = '0.5'; mealSec.style.opacity = '0.3'; mealSec.style.pointerEvents = 'none';
+            gRest.className = 'toggle-opt rest-active';
+            mealSec.style.opacity = '0.3'; mealSec.style.pointerEvents = 'none';
         } else {
-            rBtn.className = 'toggle-btn'; document.getElementById('check-rest').innerText = '⚪';
-            wBtn.style.opacity = '1'; mealSec.style.opacity = '1'; mealSec.style.pointerEvents = 'auto';
+            mealSec.style.opacity = '1'; mealSec.style.pointerEvents = 'auto';
+            if (log.workout === 'yes') gYes.className = 'toggle-opt yes-active';
+            if (log.workout === 'no') gNo.className = 'toggle-opt no-active';
         }
 
         ['b', 'l', 'd'].forEach(m => {
             document.getElementById(`m-${m}-h`).className = `meal-opt ${log.meals[m] === 'h' ? 'h-active' : ''}`;
             document.getElementById(`m-${m}-u`).className = `meal-opt ${log.meals[m] === 'u' ? 'u-active' : ''}`;
+            document.getElementById(`m-${m}-s`).className = `meal-opt ${log.meals[m] === 's' ? 's-active' : ''}`;
         });
 
-        let mBtnG = document.getElementById('mood-great');
-        let mBtnO = document.getElementById('mood-okay');
-        let mBtnB = document.getElementById('mood-bad');
-        mBtnG.className = `meal-opt ${log.mood === 'great' ? 'h-active' : ''}`;
-        mBtnO.className = `meal-opt ${log.mood === 'okay' ? 'o-active' : ''}`;
-        mBtnB.className = `meal-opt ${log.mood === 'bad' ? 'u-active' : ''}`;
+        document.getElementById('mood-great').className = `meal-opt ${log.mood === 'great' ? 'h-active' : ''}`;
+        document.getElementById('mood-okay').className = `meal-opt ${log.mood === 'okay' ? 'o-active' : ''}`;
+        document.getElementById('mood-bad').className = `meal-opt ${log.mood === 'bad' ? 'u-active' : ''}`;
 
         document.getElementById('daily-weight-input').value = log.weight || "";
+        document.getElementById('sleep-time').value = log.sleepTime || "";
+        document.getElementById('wake-time').value = log.wakeTime || "";
+        document.getElementById('step-count').value = log.steps || "";
+
+        // Today's Points Calculation Display
+        let dayScore = calculateDayScore(log);
+        document.getElementById('today-points').innerText = (dayScore > 0 ? "+" : "") + dayScore;
+
+        document.getElementById('latest-weight-display').innerText = latestWeighIn !== null ? latestWeighIn : "--";
         
-        // Progress Calcs
-        let start = parseFloat(data.startingWeight);
         let target = parseFloat(data.targetWeight);
         let toGoDisplay = document.getElementById('weight-to-go-display');
-        let pBar = document.getElementById('progress-bar');
-        let pText = document.getElementById('progress-percent');
-        
         if (!isNaN(target) && latestWeighIn !== null) {
             toGoDisplay.innerText = Math.abs(latestWeighIn - target).toFixed(1);
         } else {
             toGoDisplay.innerText = "--";
         }
 
+        let start = parseFloat(data.startingWeight);
+        let pBar = document.getElementById('progress-bar');
+        let pText = document.getElementById('progress-percent');
         if (!isNaN(start) && !isNaN(target) && latestWeighIn !== null && start !== target) {
             let totalToLose = Math.abs(start - target);
             let lostSoFar = Math.abs(start - latestWeighIn);
@@ -466,7 +525,6 @@
             pText.innerText = '0%';
         }
 
-        // Timeframe Calcs
         let daysRemDiv = document.getElementById('days-remaining');
         if (data.targetDate) {
             let tDate = new Date(data.targetDate);
@@ -498,7 +556,7 @@
         points.sort((a,b) => a.date - b.date);
         
         if(points.length < 2) {
-            graphCont.innerHTML = '<div style="padding:20px; text-align:center; color:#888; font-size:12px; font-weight:bold;">Log your weight for at least 2 days to see your trend graph! 📈</div>';
+            graphCont.innerHTML = '<div style="padding:15px; text-align:center; color:#888; font-size:12px; font-weight:bold;">Log your weight for at least 2 days to see your trend graph! 📈</div>';
             return;
         }
 
@@ -561,10 +619,7 @@
             if (dayLog) {
                 if (dayLog.restDay) statusClass = 'rest';
                 else {
-                    let score = (dayLog.workout ? 2 : 0) + 
-                                (dayLog.meals.b==='h'?1 : dayLog.meals.b==='u'?-1:0) + 
-                                (dayLog.meals.l==='h'?1 : dayLog.meals.l==='u'?-1:0) + 
-                                (dayLog.meals.d==='h'?1 : dayLog.meals.d==='u'?-1:0);
+                    let score = calculateDayScore(dayLog);
                     if (score > 0) statusClass = 'success';
                     if (score < 0) statusClass = 'fail';
                 }
@@ -624,7 +679,6 @@
         document.getElementById('acc-crown').style.display = currentStreak >= 15 ? 'block' : 'none';
     }
 
-    // --- INIT ---
     calculateEngine();
     render();
 </script>
