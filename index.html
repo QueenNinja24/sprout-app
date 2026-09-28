@@ -107,12 +107,16 @@
                 <circle id="sprout-body" cx="50" cy="65" r="30" fill="#FFB6C1" />
                 <path id="sprout-leaf" d="M50 35 Q65 10 80 25 Q60 40 50 35" fill="#32CD32" />
                 
-                <!-- Open Eyes -->
-                <circle id="eye-left-open" cx="40" cy="60" r="3" fill="#333" opacity="1" />
-                <circle id="eye-right-open" cx="60" cy="60" r="3" fill="#333" opacity="1" />
-                <!-- Closed Sleeping Eyes -->
-                <path id="eye-left-closed" d="M 37 60 Q 40 57 43 60" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round" opacity="0" />
-                <path id="eye-right-closed" d="M 57 60 Q 60 57 63 60" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round" opacity="0" />
+                <!-- Open Eyes Group -->
+                <g id="eyes-open">
+                    <circle cx="40" cy="60" r="3" fill="#333" />
+                    <circle cx="60" cy="60" r="3" fill="#333" />
+                </g>
+                <!-- Closed Sleeping Eyes Group -->
+                <g id="eyes-closed" style="display: none;">
+                    <path d="M 37 60 Q 40 57 43 60" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round" />
+                    <path d="M 57 60 Q 60 57 63 60" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round" />
+                </g>
 
                 <path id="sprout-mouth" d="M 45 70 Q 50 75 55 70" stroke="#333" stroke-width="2" fill="transparent" stroke-linecap="round"/>
                 <circle cx="32" cy="65" r="4" fill="#FF69B4" opacity="0.5" />
@@ -663,26 +667,20 @@
 
         const log = data.logs[editingDate] || {};
         
-        const eyeLO = document.getElementById('eye-left-open');
-        const eyeRO = document.getElementById('eye-right-open');
-        const eyeLC = document.getElementById('eye-left-closed');
-        const eyeRC = document.getElementById('eye-right-closed');
+        const eyesOpen = document.getElementById('eyes-open');
+        const eyesClosed = document.getElementById('eyes-closed');
 
         if (Boolean(log.restDay) === true) {
             msg.innerText = "Shhh... Recharging! 💤";
             cont.className = ''; 
             mouth.setAttribute('d', 'M 45 68 Q 50 68 55 68'); 
             zzz.style.display = 'block';
-            if(eyeLO) eyeLO.setAttribute('opacity', '0');
-            if(eyeRO) eyeRO.setAttribute('opacity', '0');
-            if(eyeLC) eyeLC.setAttribute('opacity', '1');
-            if(eyeRC) eyeRC.setAttribute('opacity', '1');
+            if(eyesOpen) eyesOpen.style.display = 'none';
+            if(eyesClosed) eyesClosed.style.display = 'block';
         } else {
             zzz.style.display = 'none';
-            if(eyeLO) eyeLO.setAttribute('opacity', '1');
-            if(eyeRO) eyeRO.setAttribute('opacity', '1');
-            if(eyeLC) eyeLC.setAttribute('opacity', '0');
-            if(eyeRC) eyeRC.setAttribute('opacity', '0');
+            if(eyesOpen) eyesOpen.style.display = 'block';
+            if(eyesClosed) eyesClosed.style.display = 'none';
 
             if (isSick) {
                 msg.innerText = "I feel weak... save me! 🤒";
