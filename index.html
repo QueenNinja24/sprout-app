@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sprout Tracker</title>
+    
+    <!-- Mobile App Thumbnail Icons -->
+    <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+
     <style>
         :root {
             --bg: #FFF0F5;
@@ -69,7 +74,7 @@
         .toggle-group { display: flex; gap: 8px; margin-bottom: 10px; }
         .toggle-opt { flex: 1; padding: 12px 6px; border-radius: 10px; border: 1px solid var(--gray); background: white; text-align: center; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 12px; }
         .toggle-opt.yes-active { background: var(--success); border-color: var(--success); color: #006400; }
-        .toggle-opt.no-active { background: #FFB6C1; border-color: #FFB6C1; color: #8B0000; }
+        .toggle-opt.no-active { background: var(--danger); border-color: var(--danger); color: #8B0000; }
         .toggle-opt.rest-active { background: var(--rest); border-color: var(--rest); color: #104E8B; }
 
         .meal-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
@@ -77,7 +82,7 @@
         .meal-opts { display: flex; gap: 6px; flex: 1; justify-content: flex-end; }
         .meal-opt { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--gray); background: white; cursor: pointer; font-size: 12px; transition: 0.2s; text-align: center; }
         .meal-opt.h-active { background: var(--success); border-color: var(--success); color: darkgreen; font-weight: bold; }
-        .meal-opt.u-active { background: #FF6B6B; border-color: #FFB6C1; color: white; font-weight: bold; }
+        .meal-opt.u-active { background: #FFB6C1; border-color: #FFB6C1; color: #8B0000; font-weight: bold; }
         .meal-opt.s-active { background: var(--skipped); border-color: #9370DB; color: #4B0082; font-weight: bold; }
         
         .input-grid { display: flex; gap: 10px; margin-bottom: 15px; }
@@ -103,12 +108,12 @@
                 <circle id="sprout-body" cx="50" cy="65" r="30" fill="#FFB6C1" />
                 <path id="sprout-leaf" d="M50 35 Q65 10 80 25 Q60 40 50 35" fill="#32CD32" />
                 
-                <!-- Eyes (Open by default) -->
-                <circle id="eye-left-open" cx="40" cy="60" r="3" fill="#333" />
-                <circle id="eye-right-open" cx="60" cy="60" r="3" fill="#333" />
-                <!-- Closed Eyes (Hidden by default) -->
-                <path id="eye-left-closed" d="M 37 60 L 43 60" stroke="#333" stroke-width="2" stroke-linecap="round" style="display:none;" />
-                <path id="eye-right-closed" d="M 57 60 L 63 60" stroke="#333" stroke-width="2" stroke-linecap="round" style="display:none;" />
+                <!-- Open Eyes -->
+                <circle id="eye-left-open" cx="40" cy="60" r="3" fill="#333" opacity="1" />
+                <circle id="eye-right-open" cx="60" cy="60" r="3" fill="#333" opacity="1" />
+                <!-- Closed Sleeping Eyes -->
+                <path id="eye-left-closed" d="M 37 60 Q 40 57 43 60" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round" opacity="0" />
+                <path id="eye-right-closed" d="M 57 60 Q 60 57 63 60" stroke="#333" stroke-width="2" fill="none" stroke-linecap="round" opacity="0" />
 
                 <path id="sprout-mouth" d="M 45 70 Q 50 75 55 70" stroke="#333" stroke-width="2" fill="transparent" stroke-linecap="round"/>
                 <circle cx="32" cy="65" r="4" fill="#FF69B4" opacity="0.5" />
@@ -186,7 +191,6 @@
             <div id="back-to-today" class="editing-badge" onclick="setEditingDate(getTodayString())">Back to Today ↩</div>
         </div>
 
-        <!-- Workout Radio/Buttons with explicit points (No is now -1) -->
         <label style="font-size: 12px; font-weight: bold; color: #888; text-transform: uppercase; display: block; margin-bottom: 5px;">Hit the Gym?</label>
         <div class="toggle-group">
             <div id="gym-yes" class="toggle-opt" onclick="setWorkout('yes')">✅ Yes (+2)</div>
@@ -196,7 +200,6 @@
 
         <hr style="border: 0; border-top: 1px solid #EEE; margin: 15px 0;">
 
-        <!-- Meals with explicit points -->
         <div id="meal-section">
             <h3 style="margin-top: 0; font-size: 16px; margin-bottom: 12px;">Meals</h3>
             <div class="meal-row">
@@ -227,7 +230,6 @@
 
         <hr style="border: 0; border-top: 1px solid #EEE; margin: 15px 0;">
 
-        <!-- Sleep & Step Inputs -->
         <div class="input-grid">
             <div class="input-box">
                 <label>Bedtime</label>
@@ -415,7 +417,7 @@
         if (log.restDay) return 0;
         let score = 0;
         if (log.workout === 'yes') score += 2;
-        if (log.workout === 'no') score -= 1; // Negative penalty for missing gym
+        if (log.workout === 'no') score -= 1;
         ['b', 'l', 'd'].forEach(m => {
             if (log.meals[m] === 'h') score += 1;
             if (log.meals[m] === 'u') score -= 1;
@@ -656,38 +658,41 @@
         if (newRadius > 48) newRadius = 48;
         body.setAttribute('r', newRadius);
 
-        let todayLog = data.logs[getTodayString()];
+        const log = data.logs[editingDate] || {};
         
-        if (todayLog && todayLog.restDay) {
+        const eyeLO = document.getElementById('eye-left-open');
+        const eyeRO = document.getElementById('eye-right-open');
+        const eyeLC = document.getElementById('eye-left-closed');
+        const eyeRC = document.getElementById('eye-right-closed');
+
+        if (log.restDay) {
             msg.innerText = "Shhh... Recharging! 💤";
             cont.className = ''; 
             mouth.setAttribute('d', 'M 45 68 Q 50 68 55 68'); 
             zzz.style.display = 'block';
-            document.getElementById('eye-left-open').style.display = 'none';
-            document.getElementById('eye-right-open').style.display = 'none';
-            document.getElementById('eye-left-closed').style.display = 'block';
-            document.getElementById('eye-right-closed').style.display = 'block';
+            eyeLO.setAttribute('opacity', '0');
+            eyeRO.setAttribute('opacity', '0');
+            eyeLC.setAttribute('opacity', '1');
+            eyeRC.setAttribute('opacity', '1');
         } else {
-            document.getElementById('eye-left-open').style.display = 'block';
-            document.getElementById('eye-right-open').style.display = 'block';
-            document.getElementById('eye-left-closed').style.display = 'none';
-            document.getElementById('eye-right-closed').style.display = 'none';
+            zzz.style.display = 'none';
+            eyeLO.setAttribute('opacity', '1');
+            eyeRO.setAttribute('opacity', '1');
+            eyeLC.setAttribute('opacity', '0');
+            eyeRC.setAttribute('opacity', '0');
 
             if (isSick) {
                 msg.innerText = "I feel weak... save me! 🤒";
                 cont.className = 'sad';
                 mouth.setAttribute('d', 'M 45 75 Q 50 70 55 75'); 
-                zzz.style.display = 'none';
             } else if (currentStreak > 0) {
                 msg.innerText = `Streak of ${currentStreak}! I'm growing! 🔥`;
                 cont.className = 'bounce';
                 mouth.setAttribute('d', 'M 45 70 Q 50 78 55 70'); 
-                zzz.style.display = 'none';
             } else {
                 msg.innerText = "Let's build a streak! 🌱";
                 cont.className = 'bounce';
                 mouth.setAttribute('d', 'M 45 70 Q 50 75 55 70'); 
-                zzz.style.display = 'none';
             }
         }
 
